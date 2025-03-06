@@ -1,95 +1,123 @@
 #include <iostream>
 #include <sstream>    // 包含字符串流
 #include <string>     // 包含字符串类
-
+#include <vector>   // 包含向量类
+#include <algorithm>
 
 #include <iostream>
 using namespace std;
 
- 
-// struct listnode {
-//     int data;
-//     listnode *next;
-//     listnode(int d) : data(d), next(nullptr) {} // 构造函数
-// };
-
-
-struct listnode {
-    int data;
-    listnode *next;
-    listnode(int d); // 构造函数
+struct Pair {
+    public:
+    int key;
+    string val;
+    Pair(int k, string v) : key(k), val(v) {}
 };
 
 
-listnode::listnode(int d) {
-    data = d;
-    next = nullptr;
-}
 
-listnode* listinit(void) {
-    listnode *head = new listnode(0);
-    return head;
-} 
-
-
-void headinsert(listnode *head, int data) {
-    listnode *newnode = new listnode(data);
-    newnode -> next = head -> next;
-    head -> next = newnode;
-    head -> data++;
-}
-
-
-void tailinsert(listnode *head, int data) {
-    listnode *newnode = new listnode(data);
-    listnode *p = head;
-    while (p -> next != nullptr) {
-        p = p -> next;
+class ArrayHashTable {
+    private:
+     vector<Pair*> tables;
+    public:
+    ArrayHashTable() {
+        tables = vector<Pair*>(100);
     }
-    p -> next = newnode;
-    head -> data++;
-}
-
-
-void deletenode(listnode *head, int data) {
-    listnode *p = head;
-    while (p -> next != nullptr) {
-        if (p -> next -> data == data) {
-            listnode *temp = p -> next;
-            p -> next = p -> next -> next;
-            delete temp;
-            head -> data--;
-            return;
-        } else {
-            p = p -> next;
-        }   
+    ~ArrayHashTable() {
+        for (auto pair : tables) {
+            delete pair;
+        }
+        tables.clear();
     }
-}
 
-
-void printlist(listnode *head) {
-    listnode *p = head -> next;
-    while (p != nullptr) {
-        cout << p -> data << " ";
-        p = p -> next;
+    int hashFunc(int key){
+        return key % tables.size();
     }
-    cout << endl;
-}
+
+    string get(int key) {
+        int index = hashFunc(key);
+        Pair* pair = tables[index];
+        if(pair == nullptr) {
+            return "'";
+        }
+        return pair->val;
+    }
+
+    void put(int key, string val) {
+        Pair* pair = new Pair(key, val);
+        int index = hashFunc(key);
+        tables[index] = pair;
+    }
+
+    void remove (int key) {
+        int index = hashFunc(key);
+        delete tables[index];
+        tables[index] = nullptr;
+    }
+
+    vector<Pair*> pairset() {
+        vector<Pair*> pairset;
+        for (auto pair : tables) {
+            if(pair != nullptr) {
+                pairset.push_back(pair);
+            }
+        }
+        return pairset;
+    }
+
+    vector<int> keyset() {
+        vector<int> keyset;
+        for (auto pair : tables) {
+            if(pair != nullptr) {
+                keyset.push_back(pair->key);
+            }
+        }
+        return keyset;
+    }
+
+    vector<string> valueset() {
+        vector<string> valueset;
+        for (auto pair : tables) {
+            if(pair != nullptr) {
+                valueset.push_back(pair->val);
+            }
+        }
+        return valueset;
+    }
+
+    void print() {
+        for (auto pair : tables) {
+            if(pair != nullptr) {
+                cout << pair->key << " : " << pair->val << endl;
+            }
+        }
+    }
+
+};
+
 
 int main() {
-    listnode *head = listinit();
-    headinsert(head, 1);
-    headinsert(head, 2);
-    headinsert(head, 3);
-    headinsert(head, 3);
-    headinsert(head, 3);
-    headinsert(head, 3);
-    headinsert(head, 4);
-    headinsert(head, 5);
-    headinsert(head, 6);
-    tailinsert(head, 7);
-    deletenode(head, 3);
-    printlist(head);
+    
+    ArrayHashTable* hashTable = new ArrayHashTable();
+    hashTable->put(1, "one");
+    hashTable->put(2, "two");
+    hashTable->put(3, "three");
+    hashTable->put(4, "four");
+    hashTable->put(5, "five");
+    hashTable->put(6, "six");
 
+
+    
+    cout << hashTable->get(1) << endl;
+    cout << hashTable->get(2) << endl;
+    cout << hashTable->get(3) << endl;
+    cout << hashTable->get(4) << endl;
+    cout << hashTable->get(5) << endl;
+    cout << hashTable->get(6) << endl;
+
+    
+
+
+    hashTable->print();
     return 0;
 }

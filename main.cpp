@@ -7,88 +7,98 @@
 #include <iostream>
 using namespace std;
 
-struct Pair {
+struct Pair{
     public:
         int key;
         string val;
-        Pair(int k, string v) : key(k), val(v) {}
+        Pair(int key,string val) {
+            this -> key = key;
+            this -> val = val;
+        }
 };
 
 
-
-class ArrayHashTable {
+class hashmapchaining {
     private:
-        vector<Pair*> tables;
+        int size;           //键值对数量
+        int capacity;      //哈希表容量
+        double loadthres;   //触发扩容的负载因子阈值
+        int extendratio;    //扩容倍数
+        vector<vector<Pair *>>buckets;
     public:
-        ArrayHashTable() {
-            tables = vector<Pair*>(100);
+        //构造方法
+        hashmapchaining():size(0),capacity(4),loadthres(2.0/3.0),extendratio(2){
+            buckets.resize(capacity);
         }
-        ~ArrayHashTable() {
-            for (auto pair : tables) {
-                delete pair;
-            }
-            tables.clear();
-        }
-
-        int hashFunc(int key){
-            return key % tables.size();
-        }
-
-        string get(int key) {
-            int index = hashFunc(key);
-            Pair* pair = tables[index];
-            if(pair == nullptr) {
-                return "'";
-            }
-            return pair->val;
-        }
-
-        void put(int key, string val) {
-            Pair* pair = new Pair(key, val);
-            int index = hashFunc(key);
-            tables[index] = pair;
-        }
-
-        void remove (int key) {
-            int index = hashFunc(key);
-            delete tables[index];
-            tables[index] = nullptr;
-        }
-
-        vector<Pair*> pairset() {
-            vector<Pair*> pairset;
-            for (auto pair : tables) {
-                if(pair != nullptr) {
-                    pairset.push_back(pair);
+        //析构方法
+        ~hashmapchaining(){
+            for(auto & bucket:buckets){
+                for(Pair *pair:bucket){
+                    delete pair;
                 }
             }
-            return pairset;
         }
-
-        vector<int> keyset() {
-            vector<int> keyset;
-            for (auto pair : tables) {
-                if(pair != nullptr) {
-                    keyset.push_back(pair->key);
+        int hashfunc(int key) {
+            return key % capacity;
+        }
+        double loadfactor(){
+            return (double)size / capacity;
+        }
+        string get(int key){
+            int index = hashfunc(key);
+            for(Pair *pair:buckets[index]){
+                if(pair -> key == key){
+                    return pair -> val;
                 }
             }
-            return keyset;
+            return "null";
         }
 
-        vector<string> valueset() {
-            vector<string> valueset;
-            for (auto pair : tables) {
-                if(pair != nullptr) {
-                    valueset.push_back(pair->val);
+        void put(int key,string val){
+            int index = hashfunc(key);
+            for(Pair *pair:buckets[index]){
+                if(pair -> key == key){
+                    pair -> val = val;
+                    return;
                 }
             }
-            return valueset;
+            Pair *pair = new Pair(key,val);
+            buckets[index].push_back(pair);
+            size++;
+            if(loadfactor() > loadthres){
+                extend();
+            }
         }
 
-        void print() {
-            for (auto pair : tables) {
-                if(pair != nullptr) {
-                    cout << pair->key << " : " << pair->val << endl;
+        void remove (int key){
+            int index = hashfunc(key);
+           auto & bucket = buckets[index];
+            for(auto it = bucket.begin(); it != bucket.end(); ++it){
+                if((*it) -> key == key){
+                    bucket.erase(it);
+                    size--;
+                    return;
+                }
+            }
+        }
+
+        void extend(){
+            vector<vector<Pair *>>bucketstmp = buckets;
+            capacity *= extendratio;
+            buckets.clear();
+            buckets.resize(capacity);
+            size = 0;
+            for(auto & bucket:bucketstmp){
+                for(Pair *pair:bucket){
+                    put(pair -> key,pair -> val);
+                    delete pair;
+                }
+            }
+        }
+        void print(){
+            for(auto & bucket:buckets){
+                for(Pair *pair:bucket){
+                    cout<<pair -> key<<" "<<pair -> val<<endl;
                 }
             }
         }
@@ -97,36 +107,6 @@ class ArrayHashTable {
 
 int main() {
     
-    ArrayHashTable* hashTable = new ArrayHashTable();
-    hashTable->put(1, "one");
-    hashTable->put(2, "two");
-    hashTable->put(3, "three");
-    hashTable->put(4, "four");
-    hashTable->put(5, "five");
-    hashTable->put(6, "six");
-
-
-    
-    cout << hashTable->get(1) << endl;
-    cout << hashTable->get(2) << endl;
-    cout << hashTable->get(3) << endl;
-    cout << hashTable->get(4) << endl;
-    cout << hashTable->get(5) << endl;
-    cout << hashTable->get(6) << endl;
-
-     hashTable->remove(3);
-
-
-    hashTable->print();
-        // 使用 pairset() 方法获取所有有效的 Pair 对象
-    
-  // 使用 keyset() 方法获取所有有效的键
-    vector<int> allKeys = hashTable->keyset();
-
-    // 打印所有键
-    cout << "All keys in the hash table:" << endl;
-    for (auto key : allKeys) {
-        cout << key << endl;
-    }
+   
     return 0;
 }
